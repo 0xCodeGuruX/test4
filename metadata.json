@@ -1,0 +1,5 @@
+{
+  "name": "健康饮食管理系统",
+  "description": "一个由AI驱动的应用程序，用于管理您的健康数据，并根据生理指标和饮食偏好生成个性化的饮食计划。",
+  "requestFramePermissions": []
+}
