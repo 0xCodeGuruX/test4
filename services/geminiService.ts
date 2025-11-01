@@ -1,20 +1,23 @@
 // Fix: Revert to DeepSeek API and accept apiKey as a parameter.
 import { HealthData, DietPlan } from '../types';
 
+// 定义 DeepSeek API 的访问地址
 const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
 
+// 异步函数，用于调用 AI 生成饮食计划
 export const generateDietPlan = async (
     healthData: HealthData, 
     preferences: string,
-    apiKey: string, // apiKey is now a required parameter
+    apiKey: string, // apiKey 是必需的参数
 ): Promise<DietPlan> => {
+    // 检查 API 密钥是否存在
     if (!apiKey) {
         throw new Error('DeepSeek API 密钥缺失。请在输入框中提供您的密钥。');
     }
 
     const { heartRate, spo2, stress, sleepHours } = healthData;
 
-    // A system prompt to instruct the AI on its role and the desired output format.
+    // 系统指令，告诉 AI 它的角色和期望的输出格式
     const systemInstruction = `
         You are an expert nutritionist and a creative chef. Your primary goal is to create a healthy one-day diet plan that is **heavily based on the user's stated preferences**. The user's preferences are the most important factor to consider.
 
@@ -24,7 +27,7 @@ export const generateDietPlan = async (
         The language of the entire response must be Simplified Chinese.
     `;
     
-    // The user's specific data and request.
+    // 用户提示，包含具体的健康数据和个人偏好
     const userPrompt = `
         请根据以下健康数据和用户偏好，为用户创建一份健康的一日饮食计划。
 
@@ -41,6 +44,7 @@ export const generateDietPlan = async (
     `;
 
     try {
+        // 发送 POST 请求到 DeepSeek API
         const response = await fetch(DEEPSEEK_API_URL, {
             method: 'POST',
             headers: {
@@ -53,21 +57,25 @@ export const generateDietPlan = async (
                     { "role": "system", "content": systemInstruction },
                     { "role": "user", "content": userPrompt }
                 ],
+                // 要求返回 JSON 格式的对象
                 response_format: { type: "json_object" },
                 temperature: 0.7,
             }),
         });
 
+        // 如果请求失败，则抛出错误
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(`API 请求失败: ${errorData.error?.message || response.statusText}`);
         }
         
+        // 解析返回的 JSON 数据
         const data = await response.json();
         const content = data.choices[0].message.content;
         return JSON.parse(content) as DietPlan;
 
     } catch (error) {
+        // 捕获并处理错误
         console.error("生成饮食计划时出错:", error);
         throw new Error("无法生成饮食计划。请检查您的网络连接或 API 密钥是否正确。");
     }

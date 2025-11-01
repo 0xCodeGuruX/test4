@@ -6,6 +6,7 @@ interface PlanGeneratorProps {
     latestHealthData: HealthData | null;
 }
 
+// 加载中的提示组件
 const LoadingSpinner: React.FC = () => (
     <div className="flex items-center justify-center space-x-2">
         <div className="w-4 h-4 rounded-full animate-pulse bg-indigo-600"></div>
@@ -15,6 +16,7 @@ const LoadingSpinner: React.FC = () => (
     </div>
 );
 
+// 用于显示单餐饮食建议的卡片组件
 const DietCard: React.FC<{title: string; meal: {title: string; description: string} | undefined, icon: React.ReactNode}> = ({ title, meal, icon }) => (
     <div className="bg-gray-50 rounded-lg p-4">
         <div className="flex items-center mb-2">
@@ -26,15 +28,20 @@ const DietCard: React.FC<{title: string; meal: {title: string; description: stri
     </div>
 );
 
+// 饮食计划生成器主组件
 const PlanGenerator: React.FC<PlanGeneratorProps> = ({ latestHealthData }) => {
+    // 状态：用户的饮食偏好
     const [preferences, setPreferences] = useState('');
-    // Fix: Add state for API key management.
+    // 状态：用户的 API 密钥
     const [apiKey, setApiKey] = useState('');
+    // 状态：存储生成的饮食计划
     const [dietPlan, setDietPlan] = useState<DietPlan | null>(null);
+    // 状态：是否正在加载
     const [isLoading, setIsLoading] = useState(false);
+    // 状态：存储错误信息
     const [error, setError] = useState<string | null>(null);
 
-    // Fix: Load saved API key from localStorage on component mount.
+    // 组件挂载时从 localStorage 加载已保存的 API 密钥
     useEffect(() => {
         const savedKey = localStorage.getItem('deepseek_api_key');
         if (savedKey) {
@@ -42,11 +49,13 @@ const PlanGenerator: React.FC<PlanGeneratorProps> = ({ latestHealthData }) => {
         }
     }, []);
 
+    // 保存 API 密钥到 localStorage
     const handleSaveApiKey = () => {
         localStorage.setItem('deepseek_api_key', apiKey);
         alert('API 密钥已保存！');
     };
 
+    // 处理生成计划的逻辑
     const handleGeneratePlan = useCallback(async () => {
         if (!latestHealthData) {
             setError("没有可用的健康数据。请先输入您的数据。");
@@ -60,7 +69,7 @@ const PlanGenerator: React.FC<PlanGeneratorProps> = ({ latestHealthData }) => {
         setError(null);
         setDietPlan(null);
         try {
-            // Fix: Pass the apiKey from state to the service function.
+            // 调用 AI 服务生成计划
             const plan = await generateDietPlan(latestHealthData, preferences, apiKey);
             setDietPlan(plan);
         } catch (err: any) {
@@ -70,6 +79,7 @@ const PlanGenerator: React.FC<PlanGeneratorProps> = ({ latestHealthData }) => {
         }
     }, [latestHealthData, preferences, apiKey]);
     
+    // 如果没有健康数据，显示提示
     if (!latestHealthData) {
         return (
              <div className="text-center py-20 bg-white rounded-lg shadow-md">
@@ -79,6 +89,7 @@ const PlanGenerator: React.FC<PlanGeneratorProps> = ({ latestHealthData }) => {
         )
     }
 
+    // 渲染计划生成器界面
     return (
         <div className="space-y-6">
             <div className="bg-white p-8 rounded-xl shadow-md">
@@ -86,7 +97,7 @@ const PlanGenerator: React.FC<PlanGeneratorProps> = ({ latestHealthData }) => {
                 <p className="mt-1 text-sm text-gray-600">根据您最新的健康数据和饮食偏好，获取个性化的一日膳食计划。</p>
                 
                 <div className="mt-6 space-y-6">
-                    {/* Fix: Add API Key input field and save button. */}
+                    {/* API 密钥输入框 */}
                     <div>
                         <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700">DeepSeek API 密钥</label>
                         <div className="mt-1 flex rounded-md shadow-sm">
@@ -107,6 +118,7 @@ const PlanGenerator: React.FC<PlanGeneratorProps> = ({ latestHealthData }) => {
                             </button>
                         </div>
                     </div>
+                    {/* 饮食偏好输入框 */}
                     <div>
                         <label htmlFor="preferences" className="block text-sm font-medium text-gray-700">饮食偏好 (最重要)</label>
                         <textarea
@@ -121,6 +133,7 @@ const PlanGenerator: React.FC<PlanGeneratorProps> = ({ latestHealthData }) => {
                     </div>
                 </div>
                 
+                {/* 生成按钮 */}
                 <div className="mt-6">
                     <button
                         onClick={handleGeneratePlan}
@@ -132,6 +145,7 @@ const PlanGenerator: React.FC<PlanGeneratorProps> = ({ latestHealthData }) => {
                 </div>
             </div>
 
+            {/* 显示错误信息 */}
             {error && (
                 <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
                     <p className="font-bold">错误</p>
@@ -139,12 +153,14 @@ const PlanGenerator: React.FC<PlanGeneratorProps> = ({ latestHealthData }) => {
                 </div>
             )}
 
+            {/* 显示加载动画 */}
             {isLoading && (
                  <div className="bg-white p-8 rounded-xl shadow-md text-center">
                     <LoadingSpinner />
                 </div>
             )}
             
+            {/* 显示生成的饮食计划 */}
             {dietPlan && (
                 <div className="bg-white p-8 rounded-xl shadow-md animate-fade-in">
                     <h3 className="text-xl font-bold text-gray-900">您的个性化饮食计划</h3>
